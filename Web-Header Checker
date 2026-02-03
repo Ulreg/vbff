@@ -1,0 +1,63 @@
+Når du besøger en hjemmeside, sender serveren nogle hemmelige "labels" med tilbage (Headers). Nogle af dem beskytter mod hacking. Vi skal lave et script, der tjekker, om en hjemmeside har husket sikkerheden.
+Del 1: Basis – Hent Headers
+Vi bruger biblioteket requests, som fungerer ligesom en browser uden skærm.
+Koden forklares:
+requests.get(url): Henter hjemmesiden ned til os.
+if "Navn" in headers: Spørger om en bestemt label findes.
+Skriv denne kode i en fil kaldet webcheck.py:
+Python
+import requests
+
+url = input("Indtast URL (husk https://): ")
+print(f"Undersøger: {url} ...")
+
+try:
+    # Henter hjemmesidens data
+    svar = requests.get(url)
+    headers = svar.headers
+
+    # Vi leder efter 'X-Frame-Options' som beskytter mod Clickjacking
+    if "X-Frame-Options" in headers:
+        print("[OK] X-Frame-Options er fundet!")
+    else:
+        print("[FARE] X-Frame-Options mangler!")
+
+except:
+    print("Fejl: Kunne ikke forbinde. Huskede du 'https://'?")
+
+Del 2: Udvidet – Sikkerheds-Score (Høj Engagement)
+Nu laver vi et program, der giver hjemmesiden karakter. Jo flere sikkerheds-ting den har, jo højere score.
+Sådan gør du:
+Vi laver en variabel score = 0.
+Hver gang vi finder en god header, siger vi score = score + 1.
+Skriv denne kode:
+Python
+import requests
+
+url = input("Indtast URL (husk https://): ")
+score = 0
+sikkerheds_liste = ["X-Frame-Options", "Content-Security-Policy", "Strict-Transport-Security"]
+
+try:
+    svar = requests.get(url)
+    headers = svar.headers
+
+    print(f"--- Rapport for {url} ---")
+
+    for ting in sikkerheds_liste:
+        if ting in headers:
+            print(f"[+1 point] {ting} fundet.")
+            score = score + 1
+        else:
+            print(f"[-0 point] {ting} mangler.")
+
+    print("---------------------------")
+    print(f"SAMLET SCORE: {score} ud af {len(sikkerheds_liste)}")
+
+    if score == 3:
+        print("Vurdering: Meget sikker side!")
+    elif score == 0:
+        print("Vurdering: Meget usikker side!")
+        
+except:
+    print("Kunne ikke forbinde.")
