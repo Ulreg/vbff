@@ -23,3 +23,27 @@ for ip in ip_liste:
         print(f"[+] {ip} er OPPE (Svarer)")
     else:
         print(f"[-] {ip} er NEDE (Svarer ikke)")
+
+
+Udvidet – Scan hele netværket
+
+Nu skal vi lave koden om, så den scanner alle adresser fra 1 til 254 automatisk. Det kaldes et "Sweep".
+Sådan gør du:
+Vi bruger range(1, 255) til at tælle fra 1 til 254.
+Vi sætter tallet ind i IP-adressen med {i}.
+Skriv denne kode:
+Python
+import os
+
+netvaerk = "192.168.1"  # De første tre dele af IP'en
+print(f"Scanner hele netværket: {netvaerk}.x ...")
+
+# range(1, 255) giver os tallene 1, 2, 3 ... op til 254
+for i in range(1, 255):
+    ip = f"{netvaerk}.{i}" # Samler IP'en, f.eks. 192.168.1.55
+    
+    # Scanner kun hurtigt (timeout sat lavt med -W 1 for at spare tid)
+    respons = os.system(f"ping -c 1 -W 1 {ip} > /dev/null 2>&1")
+    
+    if respons == 0:
+        print(f"[FUNDET!] Enhed aktiv på: {ip}")
