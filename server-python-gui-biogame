@@ -1,0 +1,142 @@
+1. Installer alt nødvendigt
+
+sudo apt update
+
+sudo apt install -y \
+lightdm \
+xorg \
+openbox \
+python3 \
+python3-tk \
+unclutter \
+x11-xserver-utils
+
+###############################
+
+2. Aktivér autologin
+
+sudo nano /etc/lightdm/lightdm.conf
+
+Indsæt: 
+
+[Seat:*]
+autologin-user=kiosk
+autologin-user-timeout=0
+user-session=openbox
+
+###############################
+
+3. Lav Python-applikationen
+
+mkdir ~/app
+nano ~/app/kiosk.py
+
+Indsæt:
+
+import tkinter as tk
+
+class KioskApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Kiosk Mode")
+
+        self.root.attributes("-fullscreen", True)
+        self.root.configure(bg="black")
+
+        self.root.bind("<Alt-F4>", lambda e: "break")
+        self.root.bind("<Escape>", lambda e: "break")
+
+        frame = tk.Frame(root, bg="black")
+        frame.pack(expand=True)
+
+        label = tk.Label(
+            frame,
+            text="Python Kiosk POC",
+            fg="white",
+            bg="black",
+            font=("Arial", 48)
+        )
+        label.pack(pady=50)
+
+        btn = tk.Button(
+            frame,
+            text="Restart App",
+            font=("Arial", 24),
+            command=self.restart
+        )
+        btn.pack(pady=20)
+
+    def restart(self):
+        self.root.destroy()
+
+root = tk.Tk()
+app = KioskApp(root)
+root.mainloop()
+
+###############################
+
+4. Lav startscript (auto-restart hvis appen lukker)
+
+nano ~/start_kiosk.sh
+
+Indsæt:
+
+#!/bin/bash
+
+xset -dpms
+xset s off
+xset s noblank
+
+unclutter &
+
+while true
+do
+    python3 /home/kiosk/app/kiosk.py
+    sleep 3
+done
+
+Gør filen eksekverbar:
+
+chmod +x ~/start_kiosk.sh
+
+###############################
+
+5. Start appen automatisk når systemet logger ind
+
+mkdir -p ~/.config/openbox
+nano ~/.config/openbox/autostart
+
+Indsæt:
+
+/home/kiosk/start_kiosk.sh &
+
+###############################
+
+6. Slå screensaver fra (så skærmen aldrig slukker)
+
+sudo mkdir -p /etc/X11/xorg.conf.d
+sudo nano /etc/X11/xorg.conf.d/10-monitor.conf
+
+Indsæt:
+
+Section "Monitor"
+    Identifier "Monitor0"
+    Option "DPMS" "false"
+EndSection
+
+###############################
+
+7. Genstart og test
+
+sudo reboot
+
+###############################
+
+Hvis alt virker korrekt efter reboot
+VM vil nu:
+	1	starte Ubuntu
+	2	logge ind automatisk
+	3	starte X11
+	4	starte Python-appen i fullscreen
+	5	genstarte appen hvis den lukker
+
